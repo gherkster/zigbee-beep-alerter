@@ -1,15 +1,6 @@
 #include <Arduino.h>
 #include "sound.h"
 
-long getSoundVolume() {
-    int16_t samples[NUM_SAMPLES];
-    for (int i = 0; i < NUM_SAMPLES; i++) {
-        samples[i] = analogRead(MIC_PIN);
-    }
-    
-    return calculateMagnitude(samples, NUM_SAMPLES);
-}
-
 long calculateMagnitude(int16_t* samples, int numSamples) {
     if (numSamples == 0) {
         return 0;
@@ -27,6 +18,15 @@ long calculateMagnitude(int16_t* samples, int numSamples) {
         total_magnitude += abs(samples[i] - dc_offset);
     }
     return total_magnitude / numSamples;
+}
+
+long getSoundVolume() {
+    int16_t samples[NUM_SAMPLES];
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+        samples[i] = analogRead(MIC_PIN);
+    }
+    
+    return calculateMagnitude(samples, NUM_SAMPLES);
 }
 
 long getBaselineNoiseVolume() {

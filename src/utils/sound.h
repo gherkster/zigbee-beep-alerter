@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <driver/i2s.h>
 
 /// @brief Defines the GPIO pin for the microphone's analog output.
 #define MIC_PIN 5

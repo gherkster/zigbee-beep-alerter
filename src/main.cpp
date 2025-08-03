@@ -1,7 +1,4 @@
 #include <Arduino.h>
-#include <WiFi.h>
-#include <driver/i2s.h>
-#include <ArduinoJson.h>
 #include <Zigbee.h>
 
 #include "utils/sound.h"
