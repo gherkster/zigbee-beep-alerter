@@ -1,47 +1,45 @@
 #include <Arduino.h>
-#include <driver/i2s.h>
+#include "sound.h"
 
-long calculateAverageMagnitude(int16_t samplesBuffer[], size_t size) {
-    if (size == 0) {
+long getSoundVolume() {
+    int16_t samples[NUM_SAMPLES];
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+        samples[i] = analogRead(MIC_PIN);
+    }
+    
+    return calculateMagnitude(samples, NUM_SAMPLES);
+}
+
+long calculateMagnitude(int16_t* samples, int numSamples) {
+    if (numSamples == 0) {
         return 0;
     }
     
     long total_raw = 0;
+    for (int i = 0; i < numSamples; i++) {
+        total_raw += samples[i];
+    }
+
+    int dc_offset = total_raw / numSamples;
+
     long total_magnitude = 0;
-
-    int num_samples = size / sizeof(int16_t);
-
-    for (int i = 0; i < num_samples; i++) {
-        total_raw += samplesBuffer[i];
+    for (int i = 0; i < numSamples; i++) {
+        total_magnitude += abs(samples[i] - dc_offset);
     }
-
-    int dc_offset = total_raw / num_samples;
-
-    for (int i = 0; i < num_samples; i++) {
-        total_magnitude += abs(samplesBuffer[i] - dc_offset);
-    }
-
-    return total_magnitude / num_samples;
+    return total_magnitude / numSamples;
 }
 
-long getBaselineNoiseLevel(i2s_port_t i2sPort, int16_t samples[], size_t size) {
-    Serial.println("Calibrating noise level for 5 seconds... Please be quiet.");
-
+long getBaselineNoiseVolume() {
+    Serial.println("Calibrating noise level for 3 seconds... Please be quiet.");
     long total_magnitude = 0;
     int calibration_reads = 0;
-
-    size_t bytes_read;
     unsigned long start_time = millis();
 
-    while(millis() - start_time < 5000) {
-        i2s_read(i2sPort, samples, size, &bytes_read, portMAX_DELAY);
-
-        long averageMagnitude = calculateAverageMagnitude(samples, bytes_read);
-        
-        total_magnitude += averageMagnitude;
+    while(millis() - start_time < 3000) { // Calibrate for 3 seconds
+        total_magnitude += getSoundVolume();
         calibration_reads++;
     }
 
-    // Return the magnitude averaged over the total duration
+    if (calibration_reads == 0) return 0;
     return total_magnitude / calibration_reads;
 }
